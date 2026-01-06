@@ -114,15 +114,16 @@ st.markdown(css_code, unsafe_allow_html=True)
 st.markdown(f'<img src="{logo_base64}" class="floating-logo">', unsafe_allow_html=True)
 
 
-# --- 2. CONEXIÓN ---
+# --- 2. CONEXIÓN BLINDADA (VERSIÓN NUBE) ---
 @st.cache_resource
 def conectar_sheet():
     scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-    creds = Credentials.from_service_account_file("mirandes_secret.json", scopes=scopes)
+    
+    # CAMBIO IMPORTANTE: Leemos de st.secrets en lugar del archivo
+    # Usamos .from_service_account_info en lugar de .from_service_account_file
+    creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scopes)
     client = gspread.authorize(creds)
-    return client.open("Mirandes B 2026").worksheet("CONTROL_CARGA")
-
-try:
+    return client.open("Mirandes B 2026").worksheet("CONTROL_CARGA")try:
     hoja = conectar_sheet()
 except Exception as e:
     st.error(f"Error Conexión: {e}")
