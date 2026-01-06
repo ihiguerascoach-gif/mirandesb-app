@@ -4,40 +4,43 @@ from google.oauth2.service_account import Credentials
 from datetime import date, time as dt_time
 import time
 import base64
-import json 
-
-import streamlit as st
-import gspread
-from google.oauth2.service_account import Credentials
-from datetime import date, time as dt_time
-import time
 
 # --- 1. CONFIGURACIÓN VISUAL ---
 ROJO = "#D9001D"
 NEGRO = "#0e1117"
 BLANCO = "#FFFFFF"
 GRIS_INPUT = "#262730"
-# Usamos el logo de internet para asegurar que siempre carga
-LOGO_URL = "https://upload.wikimedia.org/wikipedia/en/thumb/c/c9/CD_Mirandes_logo.svg/1200px-CD_Mirandes_logo.svg.png"
 
 st.set_page_config(page_title="CD Mirandés B", page_icon="⚽", layout="centered")
+
+# --- FUNCIÓN PARA LEER EL LOGO (SOLUCIÓN DEFINITIVA) ---
+def get_image_base64(path):
+    try:
+        with open(path, "rb") as image_file:
+            encoded = base64.b64encode(image_file.read()).decode()
+        return f"data:image/jpg;base64,{encoded}"
+    except FileNotFoundError:
+        # Si no encuentra el archivo, devuelve None para no romper la app
+        return None
+
+# Intentamos leer tu archivo local
+logo_base64 = get_image_base64("logo.jpg")
 
 # --- CSS BLINDADO ---
 css_code = f"""
     <style>
-        /* Fondo y Textos */
         .stApp {{ background-color: {NEGRO}; color: {NEGRO}; }}
         h1 {{ 
             color: {BLANCO} !important; 
             text-transform: uppercase; 
             font-family: 'Arial Black', sans-serif; 
-            text-align: center; /* Título centrado siempre */
+            text-align: center;
             padding-top: 20px;
         }}
         h3, h4 {{ color: {ROJO} !important; }}
         label, .stMarkdown p, .stCaption {{ color: {BLANCO} !important; text-align: center; }}
         
-        /* LOGO FLOTANTE (Sin columnas, posición absoluta) */
+        /* LOGO FLOTANTE */
         .floating-logo {{
             position: fixed;
             top: 20px;
@@ -45,19 +48,12 @@ css_code = f"""
             z-index: 9999;
             width: 130px; 
             filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
-            transition: all 0.3s ease;
         }}
-        /* En móvil lo hacemos un poco más pequeño para que no tape */
         @media (max-width: 640px) {{
              .floating-logo {{
                  width: 80px;
                  top: 10px;
                  left: 10px;
-             }}
-             /* Bajamos un poco el título en móvil para que no choque con el logo */
-             h1 {{
-                 margin-top: 40px;
-                 font-size: 2rem !important;
              }}
         }}
 
@@ -67,11 +63,9 @@ css_code = f"""
         }}
         input {{ color: {BLANCO} !important; }}
         
-        /* Botones +/- */
         div[data-testid="stNumberInput"] button {{ background-color: {ROJO} !important; color: {BLANCO} !important; border: 1px solid {ROJO} !important; }}
         div[data-testid="stNumberInput"] button svg {{ fill: {BLANCO} !important; }}
         
-        /* Botón Enviar */
         div.stButton > button {{
             background-color: {ROJO} !important; color: {BLANCO} !important; border: 2px solid {ROJO} !important;
             font-weight: 800 !important; font-size: 20px !important; text-transform: uppercase; padding: 15px; width: 100%; border-radius: 8px; transition: all 0.2s ease;
@@ -80,7 +74,6 @@ css_code = f"""
         div.stButton > button:hover {{ background-color: {BLANCO} !important; border-color: {ROJO} !important; transform: scale(1.02); }}
         div.stButton > button:hover p {{ color: {ROJO} !important; }}
 
-        /* Extras */
         div.stSlider > div > div > div > div {{ background-color: {ROJO}; }}
         div[data-baseweb="timepicker"] svg {{ fill: {BLANCO} !important; }}
         #MainMenu, footer, header {{visibility: hidden;}} .stDeployButton {{display:none;}}
@@ -89,8 +82,11 @@ css_code = f"""
 st.markdown(css_code, unsafe_allow_html=True)
 
 # --- INYECCIÓN DEL ESCUDO ---
-st.markdown(f'<img src="{LOGO_URL}" class="floating-logo">', unsafe_allow_html=True)
-
+if logo_base64:
+    st.markdown(f'<img src="{logo_base64}" class="floating-logo">', unsafe_allow_html=True)
+else:
+    # Si falta el archivo, mostramos un aviso discreto
+    st.warning("⚠️ Falta subir 'logo.jpg' a GitHub")
 
 # --- 2. CONEXIÓN INTELIGENTE ---
 @st.cache_resource
@@ -105,7 +101,7 @@ def conectar_sheet():
             client = gspread.authorize(creds)
             return client.open("Mirandes B 2026").worksheet("CONTROL_CARGA")
         except Exception:
-            pass # Si falla, intentamos local
+            pass 
             
     # PRUEBA 2: Local
     try:
@@ -113,7 +109,7 @@ def conectar_sheet():
         client = gspread.authorize(creds)
         return client.open("Mirandes B 2026").worksheet("CONTROL_CARGA")
     except FileNotFoundError:
-        st.error("⚠️ ERROR DE CONEXIÓN: No encuentro las llaves.")
+        st.error("⚠️ ERROR: No encuentro las llaves de acceso.")
         st.stop()
 
 try:
@@ -122,8 +118,7 @@ except Exception as e:
     st.error(f"Error Conexión: {e}")
     st.stop()
 
-# --- 3. INTERFAZ (LIMPIA, SIN COLUMNAS RARA) ---
-# Al quitar st.columns, eliminamos cualquier posibilidad de que el '0' aparezca
+# --- 3. INTERFAZ ---
 st.title("CD MIRANDÉS B")
 st.markdown(f"<div style='text-align: center; color:{ROJO}; font-weight:bold; letter-spacing:1px; font-size:18px; margin-bottom: 20px;'>🔴⚫ CONTROL DE RENDIMIENTO</div>", unsafe_allow_html=True)
 
@@ -198,11 +193,3 @@ with st.form("mi_formulario", clear_on_submit=True):
             st.rerun()
         except Exception as e:
             st.error(f"Error: {e}")
-
-
-
-
-
-
-
-
