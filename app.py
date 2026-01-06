@@ -34,7 +34,7 @@ css_code = f"""
         label, .stMarkdown p, .stCaption {{ color: {BLANCO} !important; }}
         .stCaption {{ text-align: center; }}
         
-        .floating-logo {{
+        .logo {{
             position: fixed; top: 25px; left: 25px; z-index: 9999; width: 201px; 
             filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
         }}
@@ -179,6 +179,7 @@ with st.form("mi_formulario", clear_on_submit=True):
             st.rerun()
         except Exception as e:
             st.error(f"Error: {e}")
+
 
 
 
