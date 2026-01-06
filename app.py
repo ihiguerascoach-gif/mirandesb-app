@@ -3,7 +3,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import date, time as dt_time
 import time
-import base64 # Necesario para leer la imagen local
+import base64 
 
 # --- 1. CONFIGURACIÓN VISUAL ---
 ROJO = "#D9001D"
@@ -20,13 +20,13 @@ def get_image_base64(path):
             encoded = base64.b64encode(image_file.read()).decode()
         return f"data:image/jpg;base64,{encoded}"
     except FileNotFoundError:
-        st.error(f"❌ ERROR: No encuentro el archivo '{path}' en la carpeta. Asegúrate de que está ahí.")
+        st.error(f"❌ ERROR: No encuentro el archivo '{path}'.")
         st.stop()
 
 # Leemos el logo.jpg local
 logo_base64 = get_image_base64("logo.jpg")
 
-# --- CSS BLINDADO + LOGO FLOTANTE MÁS GRANDE ---
+# --- CSS BLINDADO ---
 css_code = f"""
     <style>
         /* 1. Fondo y Colores Base */
@@ -34,21 +34,20 @@ css_code = f"""
         h1, h2 {{ color: {BLANCO} !important; text-transform: uppercase; text-align: center; }}
         h3, h4 {{ color: {ROJO} !important; }}
         label, .stMarkdown p, .stCaption {{ color: {BLANCO} !important; }}
-        .stCaption {{ text-align: center; }} /* Subtítulo centrado */
+        .stCaption {{ text-align: center; }}
         
-        /* 2. LOGO FLOTANTE (AUMENTADO DE TAMAÑO) */
+        /* 2. LOGO FLOTANTE (Grande) */
         .floating-logo {{
             position: fixed;
             top: 25px;
             left: 25px;
             z-index: 9999;
-            width: 150px; /* <--- CAMBIADO: ANTES 100px, AHORA 150px */
+            width: 150px; 
             filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
         }}
-        /* En móviles también lo hacemos un poco más grande */
         @media (max-width: 640px) {{
              .floating-logo {{
-                 width: 100px; /* <--- CAMBIADO: ANTES 70px, AHORA 100px */
+                 width: 100px;
                  top: 15px;
                  left: 15px;
              }}
@@ -90,7 +89,6 @@ css_code = f"""
         }}
         div.stButton > button p {{ color: {BLANCO} !important; }}
         
-        /* Hover Botón Enviar */
         div.stButton > button:hover {{
             background-color: {BLANCO} !important;
             border-color: {ROJO} !important;
@@ -107,29 +105,28 @@ css_code = f"""
         .stDeployButton {{display:none;}}
     </style>
 """
-# Inyectamos el CSS
 st.markdown(css_code, unsafe_allow_html=True)
 
-# INYECTAMOS EL LOGO FLOTANTE USANDO HTML DIRECTO
+# Inyectamos logo
 st.markdown(f'<img src="{logo_base64}" class="floating-logo">', unsafe_allow_html=True)
 
 
-# --- 2. CONEXIÓN BLINDADA (VERSIÓN NUBE) ---
+# --- 2. CONEXIÓN ---
 @st.cache_resource
 def conectar_sheet():
     scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-    
-    # CAMBIO IMPORTANTE: Leemos de st.secrets en lugar del archivo
-    # Usamos .from_service_account_info en lugar de .from_service_account_file
-    creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scopes)
+    creds = Credentials.from_service_account_file("mirandes_secret.json", scopes=scopes)
     client = gspread.authorize(creds)
-    return client.open("Mirandes B 2026").worksheet("CONTROL_CARGA")try:
+    # AQUI ESTABA EL ERROR: HEMOS SEPARADO EL RETURN DEL TRY
+    return client.open("Mirandes B 2026").worksheet("CONTROL_CARGA")
+
+try:
     hoja = conectar_sheet()
 except Exception as e:
     st.error(f"Error Conexión: {e}")
     st.stop()
 
-# --- 3. TÍTULO PRINCIPAL ---
+# --- 3. TÍTULO ---
 st.title("CD MIRANDÉS B")
 st.caption("🔴⚫ CONTROL DE RENDIMIENTO")
 
@@ -209,8 +206,6 @@ with st.form("mi_formulario", clear_on_submit=True):
             with st.spinner('Enviando al cuerpo técnico...'):
                 fecha_str = fecha.strftime("%Y-%m-%d")
                 sRPE = rpe * minutos
-                
-                # Cálculo de hora decimal
                 sueno_horas_decimal = hora_input.hour + (hora_input.minute / 60)
                 
                 datos = [fecha_str, dorsal, sueno_calidad, sueno_horas_decimal, fatiga, dolor, estres, rpe, sRPE]
