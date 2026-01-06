@@ -35,10 +35,10 @@ css_code = f"""
         .stCaption {{ text-align: center; }}
         
         .floating-logo {{
-            position: fixed; top: 25px; left: 25px; z-index: 9999; width: 210px; 
+            position: fixed; top: 25px; left: 25px; z-index: 9999; width: 205px; 
             filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
         }}
-        @media (max-width: 640px) {{ .floating-logo {{ width: 125px; top: 15px; left: 15px; }} }}
+        @media (max-width: 640px) {{ .floating-logo {{ width: 120px; top: 15px; left: 15px; }} }}
 
         div[data-baseweb="select"] > div, div[data-baseweb="base-input"], div[data-baseweb="input"], div[data-baseweb="timepicker"] {{
             background-color: {GRIS_INPUT} !important; border: 1px solid {BLANCO} !important; border-radius: 8px !important; color: {BLANCO} !important;
@@ -179,5 +179,6 @@ with st.form("mi_formulario", clear_on_submit=True):
             st.rerun()
         except Exception as e:
             st.error(f"Error: {e}")
+
 
 
