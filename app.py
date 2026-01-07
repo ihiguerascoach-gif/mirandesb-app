@@ -72,7 +72,6 @@ if logo_base64:
 def conectar_sheet():
     scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     
-    # ⚠️ ASEGÚRATE DE QUE ESTE NOMBRE SEA EL DE TU EXCEL
     ARCHIVO = "Bienestar_MirandesB" 
     PESTANA = "Respuestas de formulario 1"
 
@@ -158,7 +157,6 @@ with st.form("mi_formulario", clear_on_submit=True):
     
     st.write("")
     
-    # --- CAMPO NUEVO PARA COMENTARIOS (OPCIONAL) ---
     st.markdown(f"<h5 style='color:{BLANCO}'>💬 COMENTARIOS (Opcional)</h5>", unsafe_allow_html=True)
     comentarios = st.text_area("coms", placeholder="Alguna molestia, golpe o detalle...", label_visibility="collapsed")
     
@@ -171,7 +169,7 @@ with st.form("mi_formulario", clear_on_submit=True):
                 fecha_str = fecha.strftime("%Y-%m-%d")
                 sueno_horas_decimal = hora_input.hour + (hora_input.minute / 60)
                 
-                # --- ORDEN EXACTO SEGÚN TU ARCHIVO CSV ---
+                # DATOS SEGÚN ORDEN DEL CSV
                 datos = [
                     fecha_str,           # 1. Marca temporal
                     dorsal,              # 2. Dorsal
@@ -182,10 +180,13 @@ with st.form("mi_formulario", clear_on_submit=True):
                     fatiga,              # 7. Fatiga general
                     dolor,               # 8. Dolor muscular
                     estres,              # 9. Estado de ánimo
-                    comentarios          # 10. ¿Tienes alguna molestia...?
+                    comentarios          # 10. Comentarios
                 ]
                 
-                hoja.append_row(datos)
+                # --- CAMBIO CLAVE: INSERTAR SIEMPRE EN FILA 2 ---
+                # Esto empuja los datos viejos hacia abajo, nunca sobrescribe ni pierde datos
+                hoja.insert_row(datos, 2)
+                
                 time.sleep(1)
             st.success(f"✅ REGISTRO COMPLETADO. GRACIAS, DORSAL {dorsal}")
             time.sleep(2)
