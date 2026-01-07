@@ -13,7 +13,7 @@ GRIS_INPUT = "#262730"
 
 st.set_page_config(page_title="CD Mirandés B", page_icon="⚽", layout="centered")
 
-# --- FUNCIÓN PARA LEER EL LOGO ---
+# --- FUNCIÓN LOGO ---
 def get_image_base64(path):
     try:
         with open(path, "rb") as image_file:
@@ -24,16 +24,13 @@ def get_image_base64(path):
 
 logo_base64 = get_image_base64("logo.jpg")
 
-# --- CSS BLINDADO ---
+# --- CSS ---
 css_code = f"""
     <style>
         .stApp {{ background-color: {NEGRO}; color: {NEGRO}; }}
         h1 {{ 
-            color: {BLANCO} !important; 
-            text-transform: uppercase; 
-            font-family: 'Arial Black', sans-serif; 
-            text-align: center;
-            padding-top: 20px;
+            color: {BLANCO} !important; text-transform: uppercase; 
+            font-family: 'Arial Black', sans-serif; text-align: center; padding-top: 20px;
         }}
         h3, h4 {{ color: {ROJO} !important; }}
         label, .stMarkdown p, .stCaption {{ color: {BLANCO} !important; text-align: center; }}
@@ -44,10 +41,10 @@ css_code = f"""
         }}
         @media (max-width: 640px) {{ .floating-logo {{ width: 80px; top: 10px; left: 10px; }} }}
 
-        div[data-baseweb="select"] > div, div[data-baseweb="base-input"], div[data-baseweb="input"], div[data-baseweb="timepicker"] {{
+        div[data-baseweb="select"] > div, div[data-baseweb="base-input"], div[data-baseweb="input"], div[data-baseweb="timepicker"], div[data-baseweb="text-area"] {{
             background-color: {GRIS_INPUT} !important; border: 1px solid {BLANCO} !important; border-radius: 8px !important; color: {BLANCO} !important;
         }}
-        input {{ color: {BLANCO} !important; }}
+        input, textarea {{ color: {BLANCO} !important; }}
         
         div[data-testid="stNumberInput"] button {{ background-color: {ROJO} !important; color: {BLANCO} !important; border: 1px solid {ROJO} !important; }}
         div[data-testid="stNumberInput"] button svg {{ fill: {BLANCO} !important; }}
@@ -70,15 +67,14 @@ st.markdown(css_code, unsafe_allow_html=True)
 if logo_base64:
     st.markdown(f'<img src="{logo_base64}" class="floating-logo">', unsafe_allow_html=True)
 
-# --- 2. CONEXIÓN (APUNTANDO AL ARCHIVO ORIGINAL) ---
+# --- 2. CONEXIÓN ---
 @st.cache_resource
 def conectar_sheet():
     scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-
-    # --- TUS NOMBRES ORIGINALES ---
-    ARCHIVO = "Bienestar_MirandesB"
-    PESTANA = "Respuestas de formulario 1" 
-    # ------------------------------
+    
+    # ⚠️ ASEGÚRATE DE QUE ESTE NOMBRE SEA EL DE TU EXCEL
+    ARCHIVO = "Bienestar_MirandesB" 
+    PESTANA = "Respuestas de formulario 1"
 
     if "gcp_service_account" in st.secrets:
         try:
@@ -88,7 +84,6 @@ def conectar_sheet():
             return client.open(ARCHIVO).worksheet(PESTANA)
         except Exception:
             pass 
-            
     try:
         creds = Credentials.from_service_account_file("mirandes_secret.json", scopes=scopes)
         client = gspread.authorize(creds)
@@ -162,30 +157,32 @@ with st.form("mi_formulario", clear_on_submit=True):
         minutos = st.number_input("m", 0, 180, 0, step=5, label_visibility="collapsed")
     
     st.write("")
+    
+    # --- CAMPO NUEVO PARA COMENTARIOS (OPCIONAL) ---
+    st.markdown(f"<h5 style='color:{BLANCO}'>💬 COMENTARIOS (Opcional)</h5>", unsafe_allow_html=True)
+    comentarios = st.text_area("coms", placeholder="Alguna molestia, golpe o detalle...", label_visibility="collapsed")
+    
+    st.write("")
     enviar = st.form_submit_button("ENVIAR DATOS")
 
     if enviar:
         try:
             with st.spinner('Enviando al cuerpo técnico...'):
                 fecha_str = fecha.strftime("%Y-%m-%d")
-                sRPE = rpe * minutos
                 sueno_horas_decimal = hora_input.hour + (hora_input.minute / 60)
                 
-                # --- ORDEN EXACTO SEGÚN TU EXCEL ORIGINAL ---
-                # A: Fecha | B: Dorsal | C: Calidad | D: Horas | E: Fatiga | F: Dolor | G: Estrés | H: RPE
-                # I: Minutos | J: sRPE (Los añadimos al final por si acaso)
-                
+                # --- ORDEN EXACTO SEGÚN TU ARCHIVO CSV ---
                 datos = [
-                    fecha_str,           # Col A
-                    dorsal,              # Col B
-                    sueno_calidad,       # Col C
-                    sueno_horas_decimal, # Col D
-                    fatiga,              # Col E
-                    dolor,               # Col F
-                    estres,              # Col G (Estado de ánimo)
-                    rpe,                 # Col H
-                    minutos,             # Col I (Duración)
-                    sRPE                 # Col J (Carga)
+                    fecha_str,           # 1. Marca temporal
+                    dorsal,              # 2. Dorsal
+                    minutos,             # 3. Duración (minutos)
+                    rpe,                 # 4. Intensidad (RPE)
+                    sueno_calidad,       # 5. Calidad del sueño
+                    sueno_horas_decimal, # 6. Horas de sueño
+                    fatiga,              # 7. Fatiga general
+                    dolor,               # 8. Dolor muscular
+                    estres,              # 9. Estado de ánimo
+                    comentarios          # 10. ¿Tienes alguna molestia...?
                 ]
                 
                 hoja.append_row(datos)
