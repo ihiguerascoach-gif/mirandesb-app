@@ -11,9 +11,25 @@ NEGRO = "#0e1117"
 BLANCO = "#FFFFFF"
 GRIS_INPUT = "#262730"
 
+# Configuración básica de la página
 st.set_page_config(page_title="CD Mirandés B", page_icon="logo.jpg", layout="centered")
 
-# --- FUNCIÓN LOGO ---
+# --- TRUCO: FORZAR ICONO EN MÓVIL (IOS/ANDROID) ---
+# Usamos tu enlace directo de GitHub
+URL_LOGO_GITHUB = "https://raw.githubusercontent.com/ihiguerascoach-gif/mirandesb-app/main/logo.jpg"
+
+st.markdown(
+    f"""
+    <head>
+        <link rel="apple-touch-icon" href="{URL_LOGO_GITHUB}">
+        <link rel="shortcut icon" href="{URL_LOGO_GITHUB}">
+        <link rel="icon" type="image/jpeg" href="{URL_LOGO_GITHUB}">
+    </head>
+    """,
+    unsafe_allow_html=True
+)
+
+# --- FUNCIÓN LOGO INTERNO ---
 def get_image_base64(path):
     try:
         with open(path, "rb") as image_file:
@@ -166,7 +182,7 @@ with st.form("mi_formulario", clear_on_submit=True):
     if enviar:
         try:
             with st.spinner('Enviando al cuerpo técnico...'):
-                # 🔥 CAMBIO CLAVE AQUÍ: FORMATO ESPAÑOL DD/MM/YYYY
+                # 📅 FORMATO ESPAÑOL DD/MM/YYYY
                 fecha_str = fecha.strftime("%d/%m/%Y")
                 sueno_horas_decimal = hora_input.hour + (hora_input.minute / 60)
                 
@@ -184,7 +200,7 @@ with st.form("mi_formulario", clear_on_submit=True):
                     comentarios          # 10. Comentarios
                 ]
                 
-                # INSERTAR SIEMPRE EN LA FILA 2 (para que no se pierda abajo)
+                # INSERTAR EN FILA 2
                 hoja.insert_row(datos, 2)
                 
                 time.sleep(1)
@@ -193,4 +209,3 @@ with st.form("mi_formulario", clear_on_submit=True):
             st.rerun()
         except Exception as e:
             st.error(f"Error: {e}")
-
