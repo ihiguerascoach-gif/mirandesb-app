@@ -20,7 +20,6 @@ def get_image_base64(path):
             encoded = base64.b64encode(image_file.read()).decode()
         return f"data:image/jpg;base64,{encoded}"
     except FileNotFoundError:
-        # Si no encuentra el archivo, devuelve None para no romper la app
         return None
 
 # Intentamos leer tu archivo local
@@ -85,31 +84,37 @@ st.markdown(css_code, unsafe_allow_html=True)
 if logo_base64:
     st.markdown(f'<img src="{logo_base64}" class="floating-logo">', unsafe_allow_html=True)
 else:
-    # Si falta el archivo, mostramos un aviso discreto
     st.warning("⚠️ Falta subir 'logo.jpg' a GitHub")
 
-# --- 2. CONEXIÓN INTELIGENTE ---
+# --- 2. CONEXIÓN INTELIGENTE (ACTUALIZADA A TU HOJA) ---
 @st.cache_resource
 def conectar_sheet():
     scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
-    # PRUEBA 1: Nube
+    # Definimos los nombres del archivo y la pestaña
+    NOMBRE_ARCHIVO = "Bienestar_MirandesB"
+    NOMBRE_PESTANA = "Respuestas de formulario 1"
+
+    # PRUEBA 1: Nube (Streamlit Secrets)
     if "gcp_service_account" in st.secrets:
         try:
             info_dict = dict(st.secrets["gcp_service_account"])
             creds = Credentials.from_service_account_info(info_dict, scopes=scopes)
             client = gspread.authorize(creds)
-            return client.open("Mirandes B 2026").worksheet("CONTROL_CARGA")
+            return client.open(NOMBRE_ARCHIVO).worksheet(NOMBRE_PESTANA)
         except Exception:
-            pass 
+            pass # Si falla, intentamos local
             
-    # PRUEBA 2: Local
+    # PRUEBA 2: Local (Archivo JSON en PC)
     try:
         creds = Credentials.from_service_account_file("mirandes_secret.json", scopes=scopes)
         client = gspread.authorize(creds)
-        return client.open("Mirandes B 2026").worksheet("CONTROL_CARGA")
+        return client.open(NOMBRE_ARCHIVO).worksheet(NOMBRE_PESTANA)
     except FileNotFoundError:
         st.error("⚠️ ERROR: No encuentro las llaves de acceso.")
+        st.stop()
+    except gspread.WorksheetNotFound:
+        st.error(f"⚠️ ERROR: No encuentro la pestaña '{NOMBRE_PESTANA}' dentro de '{NOMBRE_ARCHIVO}'. Revisa el nombre abajo a la izquierda en tu Excel.")
         st.stop()
 
 try:
