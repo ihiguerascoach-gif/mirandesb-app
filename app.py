@@ -11,7 +11,7 @@ NEGRO = "#0e1117"
 BLANCO = "#FFFFFF"
 GRIS_INPUT = "#262730"
 
-st.set_page_config(page_title="CD Mirandés B", page_icon="⚽", layout="centered")
+st.set_page_config(page_title="CD Mirandés B", page_icon="logo.jpg", layout="centered")
 
 # --- FUNCIÓN LOGO ---
 def get_image_base64(path):
@@ -193,3 +193,4 @@ with st.form("mi_formulario", clear_on_submit=True):
             st.rerun()
         except Exception as e:
             st.error(f"Error: {e}")
+
