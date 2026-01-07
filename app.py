@@ -13,7 +13,7 @@ GRIS_INPUT = "#262730"
 
 st.set_page_config(page_title="CD Mirandés B", page_icon="⚽", layout="centered")
 
-# --- FUNCIÓN PARA LEER EL LOGO (SOLUCIÓN DEFINITIVA) ---
+# --- FUNCIÓN PARA LEER EL LOGO ---
 def get_image_base64(path):
     try:
         with open(path, "rb") as image_file:
@@ -22,7 +22,6 @@ def get_image_base64(path):
     except FileNotFoundError:
         return None
 
-# Intentamos leer tu archivo local
 logo_base64 = get_image_base64("logo.jpg")
 
 # --- CSS BLINDADO ---
@@ -39,24 +38,12 @@ css_code = f"""
         h3, h4 {{ color: {ROJO} !important; }}
         label, .stMarkdown p, .stCaption {{ color: {BLANCO} !important; text-align: center; }}
         
-        /* LOGO FLOTANTE */
         .floating-logo {{
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 9999;
-            width: 130px; 
+            position: fixed; top: 20px; left: 20px; z-index: 9999; width: 130px; 
             filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
         }}
-        @media (max-width: 640px) {{
-             .floating-logo {{
-                 width: 80px;
-                 top: 10px;
-                 left: 10px;
-             }}
-        }}
+        @media (max-width: 640px) {{ .floating-logo {{ width: 80px; top: 10px; left: 10px; }} }}
 
-        /* Inputs y Botones */
         div[data-baseweb="select"] > div, div[data-baseweb="base-input"], div[data-baseweb="input"], div[data-baseweb="timepicker"] {{
             background-color: {GRIS_INPUT} !important; border: 1px solid {BLANCO} !important; border-radius: 8px !important; color: {BLANCO} !important;
         }}
@@ -80,41 +67,34 @@ css_code = f"""
 """
 st.markdown(css_code, unsafe_allow_html=True)
 
-# --- INYECCIÓN DEL ESCUDO ---
 if logo_base64:
     st.markdown(f'<img src="{logo_base64}" class="floating-logo">', unsafe_allow_html=True)
-else:
-    st.warning("⚠️ Falta subir 'logo.jpg' a GitHub")
 
-# --- 2. CONEXIÓN INTELIGENTE (ACTUALIZADA A TU HOJA) ---
+# --- 2. CONEXIÓN (APUNTANDO AL ARCHIVO ORIGINAL) ---
 @st.cache_resource
 def conectar_sheet():
     scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
-    # Definimos los nombres del archivo y la pestaña
-    NOMBRE_ARCHIVO = "Bienestar_MirandesB"
-    NOMBRE_PESTANA = "Respuestas de formulario 1"
+    # --- TUS NOMBRES ORIGINALES ---
+    ARCHIVO = "Bienestar_MirandesB"
+    PESTANA = "Respuestas de formulario 1" 
+    # ------------------------------
 
-    # PRUEBA 1: Nube (Streamlit Secrets)
     if "gcp_service_account" in st.secrets:
         try:
             info_dict = dict(st.secrets["gcp_service_account"])
             creds = Credentials.from_service_account_info(info_dict, scopes=scopes)
             client = gspread.authorize(creds)
-            return client.open(NOMBRE_ARCHIVO).worksheet(NOMBRE_PESTANA)
+            return client.open(ARCHIVO).worksheet(PESTANA)
         except Exception:
-            pass # Si falla, intentamos local
+            pass 
             
-    # PRUEBA 2: Local (Archivo JSON en PC)
     try:
         creds = Credentials.from_service_account_file("mirandes_secret.json", scopes=scopes)
         client = gspread.authorize(creds)
-        return client.open(NOMBRE_ARCHIVO).worksheet(NOMBRE_PESTANA)
-    except FileNotFoundError:
-        st.error("⚠️ ERROR: No encuentro las llaves de acceso.")
-        st.stop()
-    except gspread.WorksheetNotFound:
-        st.error(f"⚠️ ERROR: No encuentro la pestaña '{NOMBRE_PESTANA}' dentro de '{NOMBRE_ARCHIVO}'. Revisa el nombre abajo a la izquierda en tu Excel.")
+        return client.open(ARCHIVO).worksheet(PESTANA)
+    except Exception as e:
+        st.error(f"⚠️ Error de conexión: {e}")
         st.stop()
 
 try:
@@ -190,7 +170,24 @@ with st.form("mi_formulario", clear_on_submit=True):
                 fecha_str = fecha.strftime("%Y-%m-%d")
                 sRPE = rpe * minutos
                 sueno_horas_decimal = hora_input.hour + (hora_input.minute / 60)
-                datos = [fecha_str, dorsal, sueno_calidad, sueno_horas_decimal, fatiga, dolor, estres, rpe, sRPE]
+                
+                # --- ORDEN EXACTO SEGÚN TU EXCEL ORIGINAL ---
+                # A: Fecha | B: Dorsal | C: Calidad | D: Horas | E: Fatiga | F: Dolor | G: Estrés | H: RPE
+                # I: Minutos | J: sRPE (Los añadimos al final por si acaso)
+                
+                datos = [
+                    fecha_str,           # Col A
+                    dorsal,              # Col B
+                    sueno_calidad,       # Col C
+                    sueno_horas_decimal, # Col D
+                    fatiga,              # Col E
+                    dolor,               # Col F
+                    estres,              # Col G (Estado de ánimo)
+                    rpe,                 # Col H
+                    minutos,             # Col I (Duración)
+                    sRPE                 # Col J (Carga)
+                ]
+                
                 hoja.append_row(datos)
                 time.sleep(1)
             st.success(f"✅ REGISTRO COMPLETADO. GRACIAS, DORSAL {dorsal}")
