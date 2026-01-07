@@ -166,25 +166,25 @@ with st.form("mi_formulario", clear_on_submit=True):
     if enviar:
         try:
             with st.spinner('Enviando al cuerpo técnico...'):
-                fecha_str = fecha.strftime("%Y-%m-%d")
+                # 🔥 CAMBIO CLAVE AQUÍ: FORMATO ESPAÑOL DD/MM/YYYY
+                fecha_str = fecha.strftime("%d/%m/%Y")
                 sueno_horas_decimal = hora_input.hour + (hora_input.minute / 60)
                 
-                # DATOS SEGÚN ORDEN DEL CSV
+                # DATOS ORDENADOS
                 datos = [
                     fecha_str,           # 1. Marca temporal
                     dorsal,              # 2. Dorsal
-                    minutos,             # 3. Duración (minutos)
-                    rpe,                 # 4. Intensidad (RPE)
-                    sueno_calidad,       # 5. Calidad del sueño
-                    sueno_horas_decimal, # 6. Horas de sueño
-                    fatiga,              # 7. Fatiga general
-                    dolor,               # 8. Dolor muscular
-                    estres,              # 9. Estado de ánimo
+                    minutos,             # 3. Duración
+                    rpe,                 # 4. RPE
+                    sueno_calidad,       # 5. Calidad sueño
+                    sueno_horas_decimal, # 6. Horas sueño
+                    fatiga,              # 7. Fatiga
+                    dolor,               # 8. Dolor
+                    estres,              # 9. Estado ánimo
                     comentarios          # 10. Comentarios
                 ]
                 
-                # --- CAMBIO CLAVE: INSERTAR SIEMPRE EN FILA 2 ---
-                # Esto empuja los datos viejos hacia abajo, nunca sobrescribe ni pierde datos
+                # INSERTAR SIEMPRE EN LA FILA 2 (para que no se pierda abajo)
                 hoja.insert_row(datos, 2)
                 
                 time.sleep(1)
